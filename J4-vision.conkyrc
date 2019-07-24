@@ -1,0 +1,255 @@
+--[[
+#=====================================================================================
+#
+# Date    : package-date
+# Author  : http://j4media.com
+# Github  : https://github.com/j4media/conky-j4-vision
+# Editor  : john | j4media
+# Version : package-version
+# License : Distributed under the terms of GNU GPL version 2 or later
+#
+# Special thanks to Zagortenay333 for the inspiration
+# Github  : https://github.com/zagortenay333/conky-Vision
+#=====================================================================================
+# CONKY
+# For commands in conky.config section:
+# http://conky.sourceforge.net/config_settings.html
+#
+# For commands in conky.text section:
+# http://conky.sourceforge.net/variables.html
+#
+# A PDF with all variables is provided
+#=====================================================================================
+# FONTS
+# To avoid copyright infringements you will have to download
+# and install the fonts yourself sometimes.
+#=====================================================================================
+# GENERAL INFO ABOUT FONTS
+# Go and look for a nice font on sites like http://www.dafont.com/
+# Download and unzip - double click the font to install it (font-manager must be installed)
+# No font-manager then put fonts in ~/.fonts
+# Change the font name in the conky
+# The name can be known with a command in the terminal: fc-list | grep "part of name"
+# Change width and height of the conky according to font
+# Reboot your system or fc-cache -fv in terminal
+# Enjoy
+#=====================================================================================
+# FONTS FOR THIS CONKY
+# Montserrat (download from https://fonts.google.com)
+#=====================================================================================
+# The conky code is not in the lua format.
+
+]]
+
+
+conky.config = {
+
+-------------------------------------
+--  Generic Settings
+-------------------------------------
+background=true,
+update_interval=1,
+double_buffer=true,
+no_buffers=true,
+imlib_cache_size=10,
+
+draw_shades=false,
+draw_outline=false,
+draw_borders=false,
+
+
+-------------------------------------
+--  Window Specifications
+-------------------------------------
+gap_x=100,
+gap_y=100,
+
+alignment="top_right",
+
+minimum_height=1200,
+minimum_width=600,
+
+own_window=true,
+own_window_type="desktop",
+own_window_transparent=true,
+own_window_hints="undecorated,below,sticky,skip_taskbar,skip_pager",
+
+own_window_argb_visual=true,
+own_window_argb_value=50,
+
+-------------------------------------
+--  Text Settings
+-------------------------------------
+use_xft=true,
+xftalpha=1,
+font="Montserrat:size=10",
+text_buffer_size=256,
+override_utf8_locale=true,
+
+
+-------------------------------------
+--  Color Scheme
+-------------------------------------
+default_color='FFFFFF',
+
+color0='FFFFFF', -- clock
+color1='FFFFFF', -- date
+color2='FFFFFF', -- current temperature
+color3='FFFFFF', -- high tempratures
+color4='FFFFFF', -- low tempratures
+color5='FFFFFF', -- days
+color6='5B6761', -- horizontal line
+
+
+-------------------------------------
+--  Icon Sources
+-------------------------------------
+template0='~/.config/conky/vision/.conky-vision-icons/#fff__205',  --  today
+template1='~/.config/conky/vision/.conky-vision-icons/#fff__64',  --  +1day
+template2='~/.config/conky/vision/.conky-vision-icons/#fff__64',  --  +2days
+template3='~/.config/conky/vision/.conky-vision-icons/#fff__64',  --  +3days
+template4='~/.config/conky/vision/.conky-vision-icons/#fff__64',  --  +4days
+
+
+-------------------------------------
+--  API Key
+-------------------------------------
+template6="ENTER YOUR OPENWEATHERMAP API KEY HERE",
+
+
+-------------------------------------
+--  City ID
+-------------------------------------
+template7="ENTER YOUR CITY ID FROM OPENWEATHERMAP HERE",
+
+
+-------------------------------------
+--  Temp Unit (default, metric, imperial)
+-------------------------------------
+template8="imperial",
+
+
+-------------------------------------
+--  Locale (e.g. "es_ES.UTF-8")
+--  Leave empty for default
+-------------------------------------
+template9=""
+
+}
+
+
+---------------------------------------------------
+---------------------------------------------------
+
+conky.text = [[
+\
+\
+\
+\
+${execi 300 l=${template9}; l=${l%%_*}; curl -s "api.openweathermap.org/data/2.5/forecast/daily?APPID=${template6}&id=${template7}&cnt=5&units=${template8}&lang=$l" -o ~/.cache/forecast.json}\
+${execi 300 l=${template9}; l=${l%%_*}; curl -s "api.openweathermap.org/data/2.5/weather?APPID=${template6}&id=${template7}&cnt=5&units=${template8}&lang=$l" -o ~/.cache/weather.json}\
+\
+\
+\
+\
+# CURRENT TIME
+${alignc}${color0}${font Montserrat:size=96}${time %I}${font Montserrat Thin:size=96}:${font Montserrat Thin:size=60}${time %M}${font Montserrat Thin:size=40}${time %P}\
+${font}${color}
+\
+\
+\
+\
+# CURRENT DAY AND DATE
+${voffset 30}\
+${alignc}${font Montserrat:size=28}${color1}${execi 300 LANG=${template9} LC_TIME=${template9} date +"%A "}${font Montserrat:size=28}${color1}/ ${font Montserrat Thin:size=20}${color1}${execi 300 LANG=${template9} LC_TIME=${template9} date +"%B %d"}\
+${font}${color}
+\
+# HEADING [CURRENT CONDITIONS]
+${font Montserrat:size=12}${color1}\
+${voffset 50}${alignc}\
+Current Conditions in ${execi 300 jq -r ".name" ~/.cache/weather.json}, New York
+$color6}${hr}${color}
+\
+# CURRENT WEATHER ICON
+${execi 300 cp -f ${template0}/$(jq .weather[0].id ~/.cache/weather.json).png ~/.cache/current.png}${image ~/.cache/current.png -p 0,290 -s 205x205}\
+\
+#CURRENT WEATHER CONDITION AND TEMP
+\
+${voffset 25}${goto 240}${font Montserrat:size=25}${color2}${execi 300 jq -r ".weather[0].description" ~/.cache/weather.json}\
+${font Montserrat Light:size=28}${color2}${voffset 20}${goto 240}${color0}${hr}${goto 0}\
+${font Montserrat:size=40}${color2}${voffset 29}${goto 337}Temp: ${execi 300 jq .main.temp ~/.cache/weather.json | awk '{print int($1+0.5)}' # round num}°\
+${font}${color}\
+\
+\
+\
+\
+# HEADING [FORECAST]
+${font Montserrat:size=12}${color1}\
+${goto 0}${alignc}${voffset 100}\
+FORECAST
+${color6}${hr}${color}
+\
+\
+# MAX WEATHER TEMP FOR FORECAST
+${font Montserrat:size=14}${color3}${voffset 25}\
+${goto 130}${execi 300 jq .list[1].temp.max ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 230}${execi 300 jq .list[2].temp.max ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 330}${execi 300 jq .list[3].temp.max ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 430}${execi 300 jq .list[4].temp.max ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${font}${color}\
+\
+# MIN WEATEHER TEMP FOR FORECAST
+${font Montserrat Thin:size=14}${color4}\
+${voffset 80}\
+${goto 175}${execi 300 jq .list[1].temp.min ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 275}${execi 300 jq .list[2].temp.min ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 375}${execi 300 jq .list[3].temp.min ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${goto 475}${execi 300 jq .list[4].temp.min ~/.cache/forecast.json | awk '{print int($1+0.5)}' # round num}°\
+${font}${color}
+\
+# DAY TEXT FOR FORECAST 154
+${font Montserrat:size=14}${color5}\
+${voffset 20}\
+${goto 148}${execi 300 LANG=${template9} LC_TIME=${template9} date -d +1day +%^a}\
+${goto 248}${execi 300 LANG=${template9} LC_TIME=${template9} date -d +2days +%^a}\
+${goto 348}${execi 300 LANG=${template9} LC_TIME=${template9} date -d +3days +%^a}\
+${goto 448}${execi 300 LANG=${template9} LC_TIME=${template9} date -d +4days +%^a}\
+${font}${color}
+\
+# WEATHER CONDITION FOR FORECAST
+${font Montserrat Thin:size=12}${color4}\
+${voffset 10}\
+${goto 150}${execi 300 jq -r .list[1]".weather[0].main" ~/.cache/forecast.json}\
+${goto 250}${execi 300 jq -r .list[2]".weather[0].main" ~/.cache/forecast.json}\
+${goto 350}${execi 300 jq -r .list[3]".weather[0].main" ~/.cache/forecast.json}\
+${goto 450}${execi 300 jq -r .list[4]".weather[0].main" ~/.cache/forecast.json}\
+${font}${color}
+\
+# DAILY WEATHER ICONS FOR FORECAST
+${goto 0}
+${execi 300 cp -f ${template1}/$(jq .list[1].weather[0].id ~/.cache/forecast.json).png ~/.cache/forecast-1.png}${image ~/.cache/forecast-1.png -p 125,591 -s 64x64}\
+${execi 300 cp -f ${template2}/$(jq .list[2].weather[0].id ~/.cache/forecast.json).png ~/.cache/forecast-2.png}${image ~/.cache/forecast-2.png -p 225,591 -s 64x64}\
+${execi 300 cp -f ${template3}/$(jq .list[3].weather[0].id ~/.cache/forecast.json).png ~/.cache/forecast-3.png}${image ~/.cache/forecast-3.png -p 325,591 -s 64x64}\
+${execi 300 cp -f ${template4}/$(jq .list[4].weather[0].id ~/.cache/forecast.json).png ~/.cache/forecast-4.png}${image ~/.cache/forecast-4.png -p 425,591 -s 64x64}\
+\
+\
+\
+\
+# HEADING [SYSTEM INFO]
+${color2}${alignc}${voffset 10}${font Montserrat:pixelsize=18}SYSTEM INFO
+$color6}${hr}${color}
+# CPU, RAM, HD FREE AND UPTIME INFO
+$alignr${color1}${font Montserrat Light:pixelsize=12}${cpu cpu0} % CPU${font}
+${color0}${cpubar cpu0}
+$alignr${color1}${font Montserrat Light:pixelsize=12}${voffset 12}${mem} / ${memperc} % RAM${font}
+${color0}${membar}
+$alignr${color1}${font Montserrat Light:pixelsize=12}${voffset 12}${fs_free /} / ${fs_free_perc /} % HD FREE${font}
+${color0}${fs_bar /}
+$alignr${color1}${font Montserrat Light:pixelsize=12}${voffset 10}${uptime} UPTIME${font}
+\
+# SYSTEM UPDATE STATUS
+${font IcoFont:pixelsize=70}${voffset 10}${font Montserrat:pixelsize=16}${voffset -13}  System Updates Available:   ${font Montserrat Black:pixelsize=28}${voffset -8} ${execi 1800 checkupdates | wc -l} ${execi 3600 yay -Pu --aur | wc -l}
+$color6}${hr}${color}
+# LSB RELEASE
+${font Montserrat:pixelsize=16}${execi 6000 lsb_release -d | grep 'Descr'|awk {'print $2 " " $3" " $4" " $5'}}${alignr}${font Montserrat:pixelsize=16}${execi 6000 lsb_release -a | grep 'Release'|awk {'print $2""$3""$4""$5'}}${color}
+]]
